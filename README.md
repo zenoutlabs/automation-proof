@@ -1,5 +1,7 @@
 # ZenOut Labs · Automation proof
 
+[![Evidence checks](https://github.com/zenoutlabs/automation-proof/actions/workflows/evidence.yml/badge.svg)](https://github.com/zenoutlabs/automation-proof/actions/workflows/evidence.yml)
+
 **A transparent record of eight automation demonstrations, with reusable acceptance questions.**
 
 [ZenOut Labs](https://zenoutlabs.com/) · [How the evidence was prepared](PROVENANCE.md) · [Acceptance checklist](ACCEPTANCE-CHECKLIST.md)
