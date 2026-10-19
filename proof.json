@@ -1,0 +1,161 @@
+{
+  "schemaVersion": 1,
+  "recordedDate": "2026-10-18",
+  "release": "v5-rc8",
+  "evidenceKind": "publisher-recorded-n8n-output",
+  "workflowExecution": "actual-n8n-account",
+  "externalServices": "simulated",
+  "runs": [
+    {
+      "id": "voice",
+      "name": "Ad Response and Voice Receptionist",
+      "mode": "demo",
+      "status": "simulated_booked",
+      "ok": true,
+      "mockedProviders": true,
+      "externalEffects": 0,
+      "trace": [
+        "validated_envelope",
+        "planned_calendar_read",
+        "effect_prepared",
+        "provider_result_checked"
+      ],
+      "sourceRecordSha256": "e4b9df62e6a755d96eeb07f42775048be08f9563fb32a258360a6210aa34083e",
+      "originalWorkflowSha256": "8c6c0b5001867527641457a076334dd9fbc08beda5f88404ad8a8820ca9736af"
+    },
+    {
+      "id": "gmail",
+      "name": "Consent-Safe Gmail Outreach",
+      "mode": "demo",
+      "status": "simulated_sent",
+      "ok": true,
+      "mockedProviders": true,
+      "externalEffects": 0,
+      "trace": [
+        "validated_envelope",
+        "planned_email",
+        "effect_prepared",
+        "provider_result_checked"
+      ],
+      "sourceRecordSha256": "a2fa49461bc1cdc23f4892c2865f401ed04111ea464b6b908296355affd17908",
+      "originalWorkflowSha256": "df01f8e2bfa964d090133a75b2a35bd7aebd3f493f6c016da00a6df66d880ba8"
+    },
+    {
+      "id": "content",
+      "name": "Content Queue and Publisher",
+      "mode": "demo",
+      "status": "simulated_awaiting_human_review",
+      "ok": true,
+      "mockedProviders": true,
+      "externalEffects": 0,
+      "trace": [
+        "validated_envelope",
+        "planned_ai_draft",
+        "effect_prepared",
+        "provider_result_checked"
+      ],
+      "sourceRecordSha256": "6ceb54f361a14e01c99c0eefb1980f2133d8da6643421649464cb5f0f267c323",
+      "originalWorkflowSha256": "ccd532a999efee43a00a78395d3665f4973a6045e0c6a5a1f8b3cb690e774ef9"
+    },
+    {
+      "id": "estimate",
+      "name": "Estimate Follow-Up and Revenue Recovery",
+      "mode": "demo",
+      "status": "simulated_sent",
+      "ok": true,
+      "mockedProviders": true,
+      "externalEffects": 0,
+      "trace": [
+        "validated_envelope",
+        "planned_email",
+        "effect_prepared",
+        "provider_result_checked"
+      ],
+      "sourceRecordSha256": "6b2313a137445f49ebebbb68e3083751d361a2f74cc3eb884473b9dfa64b1f57",
+      "originalWorkflowSha256": "5896ba1cf7bec7141cb138c027dc0799312fe09c51ce5bff3b41deb275341928"
+    },
+    {
+      "id": "meeting",
+      "name": "Meeting Briefing Digest",
+      "mode": "demo",
+      "status": "simulated_sent",
+      "ok": true,
+      "mockedProviders": true,
+      "externalEffects": 0,
+      "trace": [
+        "validated_envelope",
+        "planned_calendar_read",
+        "assembled_digest",
+        "effect_prepared",
+        "provider_result_checked"
+      ],
+      "sourceRecordSha256": "cfb8bb02d510fb2a3dd42222d9d03952909c8448d0fd09e887f4b2143e3e315f",
+      "originalWorkflowSha256": "97ce36d327f1aa276bc3d39d6d3c4cbbada370f33b5e593d57d0b93a0792f689"
+    },
+    {
+      "id": "missed",
+      "name": "Missed Call Recovery and Callback Queue",
+      "mode": "demo",
+      "status": "simulated_sms_accepted",
+      "ok": true,
+      "mockedProviders": true,
+      "externalEffects": 0,
+      "trace": [
+        "validated_envelope",
+        "planned_sms",
+        "effect_prepared",
+        "provider_result_checked"
+      ],
+      "sourceRecordSha256": "1d6dec4aad19fde9b563a523f953f1f96930dbc076febca9008c8c61643d4a02",
+      "originalWorkflowSha256": "3dfe8b33b1a59289c0e2cdbfa4df7a6e336c3c04e9d88ab800db4eb22c8a5839"
+    },
+    {
+      "id": "research",
+      "name": "Public Business Research Queue",
+      "mode": "demo",
+      "status": "simulated_research_ready",
+      "ok": true,
+      "mockedProviders": true,
+      "externalEffects": 0,
+      "trace": [
+        "validated_envelope",
+        "planned_dataset_read",
+        "effect_prepared",
+        "provider_result_checked"
+      ],
+      "sourceRecordSha256": "27766ebd8b9819a39c5fe36b76546f944274cf34a4df98c20ab782dc56d758ce",
+      "originalWorkflowSha256": "b24ba2687ad1ca17273819028e4eeef119df1b71e8d06167a2dda3eb17438cd1"
+    },
+    {
+      "id": "review",
+      "name": "Review Follow-Up and Escalation",
+      "mode": "demo",
+      "status": "simulated_sent",
+      "ok": true,
+      "mockedProviders": true,
+      "externalEffects": 0,
+      "trace": [
+        "validated_envelope",
+        "planned_email",
+        "effect_prepared",
+        "provider_result_checked"
+      ],
+      "sourceRecordSha256": "5bb7df291bc49d6035c16eafd72060bc49d762385bcb4487553f544305c572ee",
+      "originalWorkflowSha256": "37e9fbcd6f5fab4cdf1d6aef9cb3422ccae0a1c6e1f283cb4e8d1b52c39cc288"
+    }
+  ],
+  "database": {
+    "provider": "Neon PostgreSQL",
+    "checks": 44,
+    "passed": 44,
+    "mode": "rollback-only",
+    "sourceRecordSha256": "95ab7114b59b47ed38f9d5827dcfb63d74ce6473660fef57d4e1447eb5127e11"
+  },
+  "limitations": [
+    "No live external-service acceptance demonstrated.",
+    "No end-user message delivery demonstrated.",
+    "Rollback-only database checks do not demonstrate durable production writes.",
+    "No customer outcomes or revenue demonstrated.",
+    "This bundle verifies records; it does not execute the private workflows."
+  ]
+}
