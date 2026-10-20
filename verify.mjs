@@ -10,6 +10,7 @@ const expected = {
 };
 const exactKeys = (value, keys) => assert.deepEqual(Object.keys(value).sort(), [...keys].sort());
 const hash = value => assert.match(value, /^[a-f0-9]{64}$/);
+class EvidenceValidationError extends Error {}
 
 export function verify(proof) {
   exactKeys(proof, ['schemaVersion', 'recordedDate', 'release', 'evidenceKind', 'workflowExecution', 'externalServices', 'runs', 'database', 'limitations']);
@@ -21,7 +22,7 @@ export function verify(proof) {
   assert.equal(proof.externalServices, 'simulated');
   assert.equal(proof.runs.length, Object.keys(expected).length);
   assert.deepEqual(proof.runs.map(run => run.id).sort(), Object.keys(expected).sort());
-  for (const run of proof.runs) {
+  for (const [index, run] of proof.runs.entries()) {
     exactKeys(run, ['id', 'name', 'mode', 'status', 'ok', 'mockedProviders', 'externalEffects', 'trace', 'sourceRecordSha256', 'originalWorkflowSha256']);
     assert.equal(typeof run.name, 'string');
     assert.ok(run.name.length > 0 && run.name.length < 100);
@@ -29,7 +30,9 @@ export function verify(proof) {
     assert.equal(run.ok, true);
     assert.equal(run.mockedProviders, true);
     assert.equal(run.externalEffects, 0);
-    assert.equal(run.status, expected[run.id]);
+    if (run.status !== expected[run.id]) {
+      throw new EvidenceValidationError(`runs[${index}].status: expected "${expected[run.id]}" for workflow "${run.id}". Restore the recorded simulated status in proof.json.`);
+    }
     assert.ok(Array.isArray(run.trace) && run.trace.length >= 4);
     assert.equal(run.trace[0], 'validated_envelope');
     assert.equal(run.trace.at(-1), 'provider_result_checked');
@@ -54,7 +57,16 @@ export function verify(proof) {
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  const result = verify(JSON.parse(readFileSync(new URL('./proof.json', import.meta.url), 'utf8')));
-  console.log(`Evidence format verified: ${result.fixtureRuns} recorded fixture runs; ${result.databaseChecks} recorded rollback checks.`);
-  console.log('This checks the published records, not the private workflows or live services.');
+  try {
+    const result = verify(JSON.parse(readFileSync(new URL('./proof.json', import.meta.url), 'utf8')));
+    console.log(`Evidence format verified: ${result.fixtureRuns} recorded fixture runs; ${result.databaseChecks} recorded rollback checks.`);
+    console.log('This checks the published records, not the private workflows or live services.');
+  } catch (error) {
+    const message = error instanceof EvidenceValidationError ? error.message
+      : error instanceof SyntaxError ? 'proof.json is not valid JSON. Restore the published file or correct its JSON syntax, then try again.'
+      : error?.code === 'ENOENT' || error?.code === 'EACCES' ? 'Could not read proof.json. Keep it beside verify.mjs and make sure it is readable.'
+      : 'The record does not match the published evidence format. Restore proof.json from this repository, then try again.';
+    console.error(`Evidence verification failed: ${message}`);
+    process.exitCode = 1;
+  }
 }

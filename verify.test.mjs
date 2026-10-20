@@ -1,6 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { copyFileSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { spawnSync } from 'node:child_process';
 import { verify } from './verify.mjs';
 
 const original = JSON.parse(readFileSync(new URL('./proof.json', import.meta.url), 'utf8'));
@@ -20,5 +23,52 @@ for (const [name, mutate] of [
     const proof = structuredClone(original);
     mutate(proof);
     assert.throws(() => verify(proof));
+  });
+}
+
+test('identifies the field and recorded status without echoing the rejected value', () => {
+  const proof = structuredClone(original);
+  proof.runs[0].status = 'private-value-must-not-be-printed';
+  assert.throws(() => verify(proof), {
+    message: `runs[0].status: expected "simulated_booked" for workflow "voice". Restore the recorded simulated status in proof.json.`,
+  });
+});
+
+function runCli(t, contents) {
+  const directory = realpathSync(mkdtempSync(join(tmpdir(), 'automation-proof-cli-')));
+  t.after(() => rmSync(directory, { recursive: true, force: true }));
+  copyFileSync(new URL('./verify.mjs', import.meta.url), join(directory, 'verify.mjs'));
+  if (contents !== undefined) writeFileSync(join(directory, 'proof.json'), contents);
+  const result = spawnSync(process.execPath, [join(directory, 'verify.mjs')], { encoding: 'utf8', cwd: tmpdir() });
+  assert.ifError(result.error);
+  return result;
+}
+
+test('CLI accepts the snapshot even when launched from another folder', t => {
+  const result = runCli(t, JSON.stringify(original));
+  assert.equal(result.status, 0);
+  assert.equal(result.stderr, '');
+  assert.match(result.stdout, /Evidence format verified: 8 recorded fixture runs; 44 recorded rollback checks/);
+});
+
+test('CLI explains a rejected status and exits with code 1', t => {
+  const proof = structuredClone(original);
+  proof.runs[0].status = 'private-value-must-not-be-printed';
+  const result = runCli(t, JSON.stringify(proof));
+  assert.equal(result.status, 1);
+  assert.equal(result.stdout, '');
+  assert.equal(result.stderr, 'Evidence verification failed: runs[0].status: expected "simulated_booked" for workflow "voice". Restore the recorded simulated status in proof.json.\n');
+});
+
+for (const [name, contents, message] of [
+  ['invalid JSON', '{"private-value-must-not-be-printed":', 'proof.json is not valid JSON. Restore the published file or correct its JSON syntax, then try again.'],
+  ['a missing file', undefined, 'Could not read proof.json. Keep it beside verify.mjs and make sure it is readable.'],
+  ['an invalid record shape', 'null', 'The record does not match the published evidence format. Restore proof.json from this repository, then try again.'],
+]) {
+  test(`CLI explains ${name} without a stack trace or input dump`, t => {
+    const result = runCli(t, contents);
+    assert.equal(result.status, 1);
+    assert.equal(result.stdout, '');
+    assert.equal(result.stderr, `Evidence verification failed: ${message}\n`);
   });
 }

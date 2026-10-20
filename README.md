@@ -51,6 +51,18 @@ node --test verify.test.mjs
 
 No package installation, account, credentials, database, or network connection is needed to run these commands. The first checks record structure and boundaries. The second checks that the verifier rejects misleading changes such as relabeling a simulated run as live. Neither command reruns n8n, the private workflows, or Neon.
 
+### If the check fails
+
+The command prints `Evidence verification failed:` and exits with code 1 (a signal that the check failed). For example, changing the first workflow's recorded status produces:
+
+```text
+Evidence verification failed: runs[0].status: expected "simulated_booked" for workflow "voice". Restore the recorded simulated status in proof.json.
+```
+
+`runs[0]` means the first item in the list; code starts counting at zero. Compare that field with the original [proof.json](proof.json), or download a clean copy of the repository. Invalid JSON means the file's punctuation or structure cannot be read; a missing-file message means `proof.json` must be beside `verify.mjs`. Other mismatches ask you to restore the published record. The command does not print your rejected value or a technical stack trace.
+
+Keep the dated snapshot unchanged when experimenting: use a separate copy with fictional data. Restoring this record only repairs the local evidence check; it does not verify a live workflow or service.
+
 ## What still needs verification
 
 - Actual external providers and end-user delivery, including failure and duplicate-event behavior.
