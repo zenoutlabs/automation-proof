@@ -51,6 +51,8 @@ node --test verify.test.mjs
 
 No package installation, account, credentials, database, or network connection is needed to run these commands. The first checks record structure and boundaries. The second checks that the verifier rejects misleading changes such as relabeling a simulated run as live. Neither command reruns n8n, the private workflows, or Neon.
 
+The verifier also runs when its file or folder is reached through a symbolic link (a filesystem shortcut). It reads the `proof.json` beside the resolved script. A successful command prints `Evidence format verified:`; a blank result is not evidence that a check ran. Importing `verify()` into another script does not automatically run the command.
+
 ### If the check fails
 
 The command prints `Evidence verification failed:` and exits with code 1 (a signal that the check failed). For example, changing the first workflow's recorded status produces:

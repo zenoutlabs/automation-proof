@@ -1,9 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { copyFileSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
+import { copyFileSync, mkdtempSync, readFileSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
+import { pathToFileURL } from 'node:url';
 import { verify } from './verify.mjs';
 
 const original = JSON.parse(readFileSync(new URL('./proof.json', import.meta.url), 'utf8'));
@@ -34,15 +35,51 @@ test('identifies the field and recorded status without echoing the rejected valu
   });
 });
 
-function runCli(t, contents) {
+function runCli(t, contents, launch = 'direct') {
   const directory = realpathSync(mkdtempSync(join(tmpdir(), 'automation-proof-cli-')));
   t.after(() => rmSync(directory, { recursive: true, force: true }));
   copyFileSync(new URL('./verify.mjs', import.meta.url), join(directory, 'verify.mjs'));
   if (contents !== undefined) writeFileSync(join(directory, 'proof.json'), contents);
-  const result = spawnSync(process.execPath, [join(directory, 'verify.mjs')], { encoding: 'utf8', cwd: tmpdir() });
+  let script = join(directory, 'verify.mjs');
+  if (launch === 'linked file') {
+    script = join(directory, 'linked.mjs');
+    symlinkSync(join(directory, 'verify.mjs'), script, 'file');
+  } else if (launch === 'linked directory') {
+    symlinkSync(directory, join(directory, 'linked'), 'dir');
+    script = join(directory, 'linked', 'verify.mjs');
+  }
+  const args = launch === 'import'
+    ? ['--input-type=module', '--eval', 'await import(process.argv[1]);', pathToFileURL(script).href]
+    : [script];
+  const result = spawnSync(process.execPath, args, { encoding: 'utf8', cwd: tmpdir() });
   assert.ifError(result.error);
   return result;
 }
+
+for (const launch of ['linked file', 'linked directory']) {
+  const options = { skip: process.platform === 'win32' ? 'Symbolic links may require Windows developer privileges.' : false };
+  test(`CLI checks a valid record through a ${launch}`, options, t => {
+    const result = runCli(t, JSON.stringify(original), launch);
+    assert.equal(result.status, 0);
+    assert.equal(result.stderr, '');
+    assert.match(result.stdout, /Evidence format verified: 8 recorded fixture runs; 44 recorded rollback checks/);
+  });
+  test(`CLI rejects an invalid record through a ${launch}`, options, t => {
+    const proof = structuredClone(original);
+    proof.runs[0].status = 'wrong_status';
+    const result = runCli(t, JSON.stringify(proof), launch);
+    assert.equal(result.status, 1);
+    assert.equal(result.stdout, '');
+    assert.equal(result.stderr, 'Evidence verification failed: runs[0].status: expected "simulated_booked" for workflow "voice". Restore the recorded simulated status in proof.json.\n');
+  });
+}
+
+test('importing the verifier does not run the command or inspect proof.json', t => {
+  const result = runCli(t, 'not valid JSON', 'import');
+  assert.equal(result.status, 0);
+  assert.equal(result.stdout, '');
+  assert.equal(result.stderr, '');
+});
 
 test('CLI accepts the snapshot even when launched from another folder', t => {
   const result = runCli(t, JSON.stringify(original));

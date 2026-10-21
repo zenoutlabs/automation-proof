@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
-import { pathToFileURL } from 'node:url';
+import { readFileSync, realpathSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 
 const expected = {
   voice: 'simulated_booked', gmail: 'simulated_sent',
@@ -56,7 +56,17 @@ export function verify(proof) {
   return { fixtureRuns: proof.runs.length, databaseChecks: proof.database.checks };
 }
 
-if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+function isMainModule() {
+  if (!process.argv[1]) return false;
+  try {
+    return realpathSync(fileURLToPath(import.meta.url)) === realpathSync(process.argv[1]);
+  } catch {
+    // An importing process may supply an argument that is not a local file.
+    return false;
+  }
+}
+
+if (isMainModule()) {
   try {
     const result = verify(JSON.parse(readFileSync(new URL('./proof.json', import.meta.url), 'utf8')));
     console.log(`Evidence format verified: ${result.fixtureRuns} recorded fixture runs; ${result.databaseChecks} recorded rollback checks.`);
